@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useMutation } from '@apollo/client';
+import { SAVE_BOOK } from '../utils/mutations';
 import {
   Container,
   Col,
@@ -7,12 +9,10 @@ import {
   Card,
   Row
 } from 'react-bootstrap';
-
+import { searchGoogleBooks } from '../utils/API';
 import Auth from '../utils/auth';
-import { saveBook, searchGoogleBooks } from '../utils/API';
+
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
-import { useMutation } from '@apollo/client';
-import { SAVE_BOOK } from '../mutations';
 
 const SearchBooks = () => {
   // create state for holding returned google api data
@@ -22,6 +22,7 @@ const SearchBooks = () => {
 
   // create state to hold saved bookId values
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
+  const [saveBook] = useMutation(SAVE_BOOK);
 
   // set up useEffect hook to save `savedBookIds` list to localStorage on component unmount
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
@@ -61,23 +62,33 @@ const SearchBooks = () => {
     }
   };
 
-  const [saveBookMutation] = useMutation(SAVE_BOOK);
-
+  // create function to handle saving a book to our database
   const handleSaveBook = async (bookId) => {
+    // find the book in `searchedBooks` state by the matching id
     const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
+    
+    // get token
     const token = Auth.loggedIn() ? Auth.getToken() : null;
-  
+
     if (!token) {
       return false;
     }
-  
+
     try {
-      const { data } = await saveBookMutation({
-        variables: { input: bookToSave },
+      const { data } = await saveBook({
+        variables: {
+          userId: Auth.getProfile().data._id,
+          input: bookToSave
+        }
       });
-  
-      const savedBookId = data.saveBook.savedBooks[data.saveBook.savedBooks.length - 1].bookId;
-      setSavedBookIds([...savedBookIds, savedBookId]);
+
+      if (!data) {
+        throw new Error('Something went wrong!')
+      }
+
+
+      // if book successfully saves to user's account, save book id to state
+      setSavedBookIds([...savedBookIds, bookToSave.bookId]);
     } catch (err) {
       console.error(err);
     }
@@ -125,8 +136,7 @@ const SearchBooks = () => {
                     <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' />
                   ) : null}
                   <Card.Body>
-                    <Card.Title>{book.title}</Card.Title>
-                    <p className='small'>Authors: {book.authors}</p>
+                    <Card.Title><a href={`https://books.google.com/books?id=${book.bookId}`}>{book.title}</a></Card.Title>
                     <Card.Text>{book.description}</Card.Text>
                     {Auth.loggedIn() && (
                       <Button

@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
 import { useMutation } from '@apollo/client';
-import { ADD_USER } from '../mutations';
+import { ADD_USER } from '../utils/mutations.js';
+
 import Auth from '../utils/auth';
 
 const SignupForm = () => {
   const [userFormData, setUserFormData] = useState({ username: '', email: '', password: '' });
   const [validated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-
-  const [addUserMutation] = useMutation(ADD_USER);
+  const [addUser, { error, data }] = useMutation(ADD_USER);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -24,14 +24,14 @@ const SignupForm = () => {
       event.preventDefault();
       event.stopPropagation();
     }
-
+    
     try {
-      const { data } = await addUserMutation({
+      const { data } = await addUser({
         variables: { ...userFormData },
       });
+      
+      Auth.login(data.addUser.token);
 
-      const { token, user } = data.addUser;
-      Auth.login(token);
     } catch (err) {
       console.error(err);
       setShowAlert(true);
@@ -89,7 +89,6 @@ const SignupForm = () => {
           />
           <Form.Control.Feedback type='invalid'>Password is required!</Form.Control.Feedback>
         </Form.Group>
-
         <Button
           disabled={!(userFormData.username && userFormData.email && userFormData.password)}
           type='submit'

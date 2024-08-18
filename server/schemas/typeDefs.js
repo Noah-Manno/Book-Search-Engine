@@ -1,3 +1,4 @@
+
 const typeDefs = `
 type User {
     _id: ID
@@ -45,4 +46,6 @@ input BookInput {
     image: String
     link: String
 }
-`
+`;
+
+module.exports = typeDefs;
