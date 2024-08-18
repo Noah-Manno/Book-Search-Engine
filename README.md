@@ -3,8 +3,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
   ## Description
   A version of Book Search Engine with Refactored Code.
-  
-  ![Screenshot](./client/src/assets/book-search-engine-p3cx.onrender.com_.png)
+
+  https://book-search-engine-qe54.onrender.com
 
   ## Table of Contents
   [Installation](#installation)  
